@@ -15,6 +15,7 @@ COMMAND_INFO = {
     "p_fav": "Favori coin listesini gösterir",
     "p_sil": "Favori coin listesinden coin siler",
     "fr": "Funding Rate raporu ve günlük CSV kaydı",
-    "whale": "Whale Alerts raporu ve günlük CSV kaydı"
-    "t":"/t: hazir liste, /t sayı: hacimli n tanesi, /t coin zaman: istedigin coine ve istenen zamana iat bilgi"
+    "whale": "Whale Alerts raporu ve günlük CSV kaydı",
+    "t":"/t: hazir liste, /t sayı: hacimli n tanesi, /t coin zaman: istedigin coine ve istenen zamana iat bilgi",
+    "⚡":"❗",
 }
