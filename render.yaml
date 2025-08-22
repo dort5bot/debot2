@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: telegram-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: PAPER_MODE
+        sync: false
+      - key: DEFAULT_BINANCE_API_KEY
+        sync: false
+      - key: DEFAULT_BINANCE_API_SECRET
+        sync: false
+      - key: DEFAULT_COINGLASS_API_KEY
+        sync: false
+      - key: DATABASE_PATH
+        sync: false
+      - key: USER_API_DB_PATH
+        sync: false
+      - key: ENVIRONMENT
+        sync: false

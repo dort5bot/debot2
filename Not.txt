@@ -1,0 +1,13 @@
+♦️1
+/io
+
+♦️👉 Daha fazla coin görmek istersen:
+* `.env` dosyana şunu ekle:
+  TOP_SYMBOLS_FOR_IO=AUTO
+  IO_MAX_SYMBOLS_MARKET=20
+  ```
+* Böylece sistem Binance’ten en çok hacmi olan **20 USDT paritesini** dinamik olarak çekecek.
+* Yada manuel yazabilirsin:
+  ```env
+TOP_SYMBOLS_FOR_IO=BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,ADAUSDT
+  ♦️
