@@ -35,6 +35,11 @@ class BinanceConfig:
     BINANCE_TICKER_TTL: int = int(os.getenv("BINANCE_TICKER_TTL", 5))
     STREAM_INTERVAL: str = os.getenv("STREAM_INTERVAL", "1m")
 
+# Fonksiyon: Binance API keylerini runtime’da güncelle
+def update_binance_keys(api_key: str, secret_key: str):
+    CONFIG.BINANCE.API_KEY = api_key
+    CONFIG.BINANCE.SECRET_KEY = secret_key
+
 # === Bot Config ===
 @dataclass
 class BotConfig:
@@ -95,13 +100,11 @@ class SystemConfig:
 @dataclass
 class IOConfig:
     ENABLED: bool = os.getenv("IO_ENABLED", "true").lower() == "true"
-    WINDOW: int = int(os.getenv("IO_WINDOW", 15))  # dakika bazlı pencere
-    MIN_NOTIONAL: float = float(os.getenv("IO_MIN_NOTIONAL", 10000))  # minimum trade USD
-    MOMENTUM_LOOKBACK: int = int(os.getenv("IO_MOMENTUM_LOOKBACK", 5))  # momentum için bar sayısı
-    DEPTH_LEVELS: int = int(os.getenv("IO_DEPTH_LEVELS", 20))  # order book derinliği
-    CACHE_TTL: int = int(os.getenv("IO_CACHE_TTL", 10))  # saniye bazlı cache süresi
-
-    # 🔴 Yeni eklenen alanlar
+    WINDOW: int = int(os.getenv("IO_WINDOW", 15))
+    MIN_NOTIONAL: float = float(os.getenv("IO_MIN_NOTIONAL", 10000))
+    MOMENTUM_LOOKBACK: int = int(os.getenv("IO_MOMENTUM_LOOKBACK", 5))
+    DEPTH_LEVELS: int = int(os.getenv("IO_DEPTH_LEVELS", 20))
+    CACHE_TTL: int = int(os.getenv("IO_CACHE_TTL", 10))
     CASHFLOW_TIMEFRAMES: Dict[str, int] = field(
         default_factory=lambda: {
             "15m": 15,
@@ -113,16 +116,12 @@ class IOConfig:
     )
     RSI_PERIOD: int = int(os.getenv("IO_RSI_PERIOD", 14))
     OBI_DEPTH: int = int(os.getenv("IO_OBI_DEPTH", 20))
-
     FUNDING_AVG: float = float(os.getenv("IO_FUNDING_AVG", 0.0))
     FUNDING_STD: float = float(os.getenv("IO_FUNDING_STD", 0.0005))
-
     OI_BASELINE: float = float(os.getenv("IO_OI_BASELINE", 1.0))
     LIQUIDATION_BASELINE: float = float(os.getenv("IO_LIQUIDATION_BASELINE", 1.0))
-
     TOP_N_MIGRATION: int = int(os.getenv("IO_TOP_N_MIGRATION", 10))
     MAX_SYMBOLS_MARKET: int = int(os.getenv("IO_MAX_SYMBOLS_MARKET", 30))
-
     QUOTE_ASSET: str = os.getenv("IO_QUOTE_ASSET", "USDT")
 
 # === Telegram Config ===
@@ -143,7 +142,7 @@ class AppConfig:
     BINANCE: BinanceConfig = field(default_factory=BinanceConfig)
     BOT: BotConfig = field(default_factory=BotConfig)
     TA: TAConfig = field(default_factory=TAConfig)
-    IO: IOConfig = field(default_factory=IOConfig)   # ✅ IO Config entegre edildi
+    IO: IOConfig = field(default_factory=IOConfig)
     TELEGRAM: TelegramConfig = field(default_factory=TelegramConfig)
     DATABASE: DatabaseConfig = field(default_factory=DatabaseConfig)
 
