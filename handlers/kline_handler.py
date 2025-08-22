@@ -1,7 +1,11 @@
 # handlers/kline_handler.py
+#al sat sinyali oluşturur 
+#ta_utils’teki tüm göstergeleri kullanan ve gelişmiş al/sat sinyali üreten güncellenmiş bir kline_handler.py örneği hazırlat
+
+
 import asyncio
 from collections import deque
-from utils import indicators
+from utils.ta_utils import rsi, macd
 from handlers.signal_handler import publish_signal
 
 async def kline_worker(queue: asyncio.Queue, symbol: str, interval: str = "1m", lookback: int = 500):
