@@ -149,7 +149,8 @@ async def dar_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ✅ /dar k komutu → otomatik komut listesi (alfabetik)
     if mode == "k":
         scanned = scan_handlers_for_commands()
-        lines = [f"{cmd} → {desc}" for cmd, desc in sorted(scanned.items())]
+        #lines = [f"{cmd} → {desc}" for cmd, desc in sorted(scanned.items())]
+        lines = [f"{cmd} → {desc}" for cmd, desc in sorted(scanned.items(), key=lambda x: x[0].lower())]
         text = "\n".join(lines) if lines else "Komut bulunamadı."
         await update.message.reply_text(f"<pre>{text}</pre>", parse_mode="HTML")
         return
