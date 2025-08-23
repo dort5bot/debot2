@@ -108,7 +108,11 @@ def create_zip_with_tree_and_files(root_dir, zip_filename):
 def scan_handlers_for_commands():
     commands = {}
     handler_dir = os.path.join(ROOT_DIR, "handlers")
-    pattern = re.compile(r'CommandHandler\(\s*["\'](\w+)["\']')
+
+    # Regexler
+    handler_pattern = re.compile(r'CommandHandler\(\s*["\'](\w+)["\']')   # doğrudan string
+    var_handler_pattern = re.compile(r'CommandHandler\(\s*(\w+)')         # değişken (COMMAND)
+    command_pattern = re.compile(r'COMMAND\s*=\s*["\'](\w+)["\']')        # COMMAND = "..."
 
     for fname in os.listdir(handler_dir):
         if not fname.endswith("_handler.py"):
@@ -117,10 +121,22 @@ def scan_handlers_for_commands():
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 content = f.read()
-            matches = pattern.findall(content)
+
+            # 1) Direkt tırnaklı CommandHandler
+            matches = handler_pattern.findall(content)
             for cmd in matches:
-                desc = COMMAND_INFO.get(cmd, "(?)")
+                desc = COMMAND_INFO.get(cmd.lower(), "(?)")
                 commands[f"/{cmd}"] = f"{desc} ({fname})"
+
+            # 2) CommandHandler(COMMAND, ...)
+            matches_var = var_handler_pattern.findall(content)
+            if "COMMAND" in matches_var:
+                cmd_match = command_pattern.search(content)
+                if cmd_match:
+                    cmd = cmd_match.group(1)
+                    desc = COMMAND_INFO.get(cmd.lower(), "(?)")
+                    commands[f"/{cmd}"] = f"{desc} ({fname})"
+
         except Exception:
             continue
     return commands
