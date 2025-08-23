@@ -2,9 +2,7 @@
 # Tüm komutların açıklamaları burada tutulur
 
 COMMAND_INFO = {
-    "dar": "Dosya ağacı görüntüleme",
-    "dar z": "Dosya ağacı + içerikler ile ZIP arşivi",
-    "dar k": "Tüm komutların açıklamalarını gösterir",
+    "dar": "/dar: Dosya ağacı, /dar k: komut listesi, /dar z:repo zip",
     "io": "In-Out Alış Satış Baskısı raporu",
     "nls": "Balina hareketleri ve yoğunluk (NLS analizi)",
     "npr": "Nakit Piyasa Raporu",
