@@ -10,7 +10,7 @@ COMMAND_INFO = {
     "npr": "Nakit Piyasa Raporu",
     "eft": "ETF & ABD piyasaları",
     "ap": "Altların Güç Endeksi (AP)",
-    "p": "Anlık fiyat, 24h değişim, hacim bilgisi",
+    "p": "/p liste, /p n: hacimli n coin, /p coin1...: sorgu Anlıkfiyat+24hdeğişim+hacim",
     "p_ekle": "Favori coin listesine coin ekler",
     "p_fav": "Favori coin listesini gösterir",
     "p_sil": "Favori coin listesinden coin siler",
