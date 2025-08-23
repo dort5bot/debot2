@@ -2,8 +2,8 @@
 # --------------------------------
 # /dar      -> Dosya ağacı (mesaj, uzun olursa TXT)
 # /dar Z    -> ZIP (tree.txt + içerikler, sadece listelenen dosyalar + .env + .gitignore)
-# /dar k    -> Botun komut listesi + varsa eşleştirme handlers/command_info.py
-# komut listesi alfabetik sirali
+# /dar k    -> alfabetik sirali komut listesi + varsa eşleştirme handlers/command_info.py
+
 import os
 import re
 import zipfile
