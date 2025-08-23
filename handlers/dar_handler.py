@@ -1,10 +1,9 @@
-
 # handlers/dar_handler.py
 # --------------------------------
 # /dar      -> Dosya ağacı (mesaj, uzun olursa TXT)
 # /dar Z    -> ZIP (tree.txt + içerikler, sadece listelenen dosyalar + .env + .gitignore)
-# /dar k    -> Botun komut listesi
-# kaynak info
+# /dar k    -> Botun komut listesi + varsa eşleştirme handlers/command_info.py
+# komut listesi alfabetik sirali
 import os
 import re
 import zipfile
@@ -77,7 +76,7 @@ def format_tree(root_dir):
                 if item.startswith(".") and item not in [".env", ".gitignore"]:
                     continue
                 ext = os.path.splitext(item)[1]
-                if (ext not in EXT_LANG_MAP 
+                if (ext not in EXT_LANG_MAP
                         and not item.endswith(('.txt', '.csv', '.json', '.md'))
                         and item not in [".env", ".gitignore"]):
                     continue
@@ -131,10 +130,10 @@ async def dar_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     mode = args[0].lower() if args else ""
 
-    # ✅ /dar k komutu → otomatik komut listesi
+    # ✅ /dar k komutu → otomatik komut listesi (alfabetik)
     if mode == "k":
         scanned = scan_handlers_for_commands()
-        lines = [f"{cmd} → {desc}" for cmd, desc in scanned.items()]
+        lines = [f"{cmd} → {desc}" for cmd, desc in sorted(scanned.items())]
         text = "\n".join(lines) if lines else "Komut bulunamadı."
         await update.message.reply_text(f"<pre>{text}</pre>", parse_mode="HTML")
         return
