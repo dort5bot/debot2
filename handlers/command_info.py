@@ -1,5 +1,7 @@
 # handlers/command_info.py
 # Tüm komutların açıklamaları burada tutulur
+#
+#
 
 COMMAND_INFO = {
     "dar": "/dar: Dosya ağacı, /dar k: komut listesi, /dar z:repo zip",
@@ -8,7 +10,7 @@ COMMAND_INFO = {
     "npr": "Nakit Piyasa Raporu",
     "eft": "ETF & ABD piyasaları",
     "ap": "Altların Güç Endeksi (AP)",
-    "p": "/p liste, /p n: hacimli n coin, /p coin1...: sorgu Anlıkfiyat+24hdeğişim+hacim",
+    "p": "/p liste, /p n: trend n coin, /p coin1...: sorgu Anlıkfiyat+24hdeğişim+hacim",
     "p_ekle": "Favori coin listesine coin ekler",
     "p_fav": "Favori coin listesini gösterir",
     "p_sil": "Favori coin listesinden coin siler",
