@@ -1,0 +1,15 @@
+♦️
+jobs/
+  worker_a.py    # veri toplayıcı (Binance/Coinglass → cache)
+  worker_b.py    # karar & trade döngüsü (strateji/risk/order
+
+
+♦️
+utils/
+  cache.py       # TTL destekli hafif SQLite KV cache
+  config_worker.py  # hangi görev ne sıklıkla çalışacak, izlenen semboller
+README_WORKERS.md   # hızlı kurulum notları
+
+♦️
+MAIN_PATCH.txt      # main.py'ye eklenecek satırlar (örnek diff)
+
