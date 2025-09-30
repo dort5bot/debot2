@@ -1,14 +1,11 @@
-name: 🐳 Docker Build & Deploy (Controlled)
-
+name: 🐳 Docker Build & Deploy
+#v1
 on:
-#v2
-#2asamali sistem (test + manuel Yukleme)
-  # Kod push olduğunda sadece build & test çalışır
   push:
     branches: [main, master]
-
-  # Manuel tetikleme için buton (Actions → Run workflow)
-  workflow_dispatch:
+    tags: ['v*.*']
+  pull_request:
+    branches: [main, master]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,19 +14,23 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  CONTAINER_NAME: ${{ github.event.repository.name }}-${{ github.ref_name }}
+  CONTAINER_NAME: mbot1
+  # Secrets'ı env değişkenlerine ata
   RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
   ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
   ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
   ORACLE_USER: ${{ secrets.ORACLE_USER }}
 
 jobs:
-  build-test:
+  docker-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60   # <- 60 dakika olarak örnek, ihtiyacına göre90DAKİKA
     permissions:
       contents: read
       packages: write
+
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
 
     steps:
       - name: Checkout repository
@@ -45,73 +46,122 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image (no push)
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: false
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Run Tests
+      - name: Clean Docker Build Cache
         run: |
-          echo "🧪 Burada unit test / integration test çalıştırabilirsin"
-          # pytest veya custom test scriptlerini buraya ekle
-          echo "✅ Testler başarılı!"
+          echo "🧹 Cleaning Docker build cache..."
+          docker builder prune -f
+          docker buildx prune -f
+          docker system prune -f --filter "until=1h"     ##1 saatten eski dosyaları temizler
 
-  deploy-oracle:
-    # Deploy job sadece manuel tetiklenirse devreye girer
-    if: github.event_name == 'workflow_dispatch'
-    needs: build-test
+      - name: Cleanup GitHub Actions cache
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        run: |
+          echo "🧹 Cleaning up old GitHub Actions caches..."
+          sudo apt-get update && sudo apt-get install -y jq gh
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          CACHE_LIST=$(gh api repos/${{ github.repository }}/actions/caches \
+            | jq -r '.actions_caches[] | select(.last_accessed_at < "'$(date -d '30 days ago' -u +"%Y-%m-%dT%H:%M:%SZ")'") | .id')
+          if [ -n "$CACHE_LIST" ]; then
+            for cache_id in $CACHE_LIST; do
+              gh api repos/${{ github.repository }}/actions/caches/$cache_id -X DELETE || true
+            done
+            echo "✅ Cache cleanup completed"
+          else
+            echo "✅ No old caches to clean up"
+          fi
+
+  deploy:
+    needs: docker-build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
-
+    timeout-minutes: 40   # <- Deploy için örnek 40 dakika
     steps:
-      - name: Display deployment info
+      - name: Check deployment triggers
         run: |
-          echo "🚀 Manual Deployment Başlıyor..."
-          echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-          echo "🐳 Container: ${{ env.CONTAINER_NAME }}"
-          echo "🔧 Environment: ${{ github.ref_name }}"
+          echo "📦 Image built successfully: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "🏷 Tags: ${{ needs.docker-build.outputs.tags }}"
+
+      - name: Trigger Render Deploy
+        if: env.RENDER_DEPLOY_HOOK != ''
+        run: |
+          echo "🚀 Triggering Render deployment..."
+          curl -s -X POST "${{ env.RENDER_DEPLOY_HOOK }}"
+          echo "✅ Render deployment triggered successfully"
 
       - name: Deploy to Oracle VPS
         if: env.ORACLE_SSH_KEY != '' && env.ORACLE_HOST != ''
         env:
           SSH_PRIVATE_KEY: ${{ env.ORACLE_SSH_KEY }}
-          CONTAINER_PORT: 3000
         run: |
-          echo "🔑 SSH bağlantısı hazırlanıyor..."
-          USER="${ORACLE_USER:-ubuntu}"
-          
+          echo "🚀 Deploying to Oracle VPS..."
+          USER="${{ env.ORACLE_USER }}"
+          USER=${USER:-ubuntu}
+          echo "👤 Using user: $USER"
+          echo "📝 Using host: ${{ env.ORACLE_HOST }}"
+          echo "📦 Container name: ${{ env.CONTAINER_NAME }}"
+
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$ORACLE_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ env.ORACLE_HOST }}" >> ~/.ssh/known_hosts
 
-          ssh -i ~/.ssh/deploy_key $USER@$ORACLE_HOST << EOF
-            set -e
-            echo "🧹 Docker cleanup"
-            docker system prune -f
-
-            IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          #hiç kullanılmayan eski tag’siz image, durdurulan container, kullanılmayan custom network’leri temizler.
+          ssh -i ~/.ssh/deploy_key $USER@${{ env.ORACLE_HOST }} << EOF
+            DOCKER_REGISTRY="${{ env.REGISTRY }}"
+            DOCKER_IMAGE_NAME="${{ env.IMAGE_NAME }}"
             CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
-            CONTAINER_PORT="$CONTAINER_PORT"
-
-            echo "🐳 Pulling image: \$IMAGE_NAME"
-            docker pull "\$IMAGE_NAME"
-
+          
+            echo "🐳 Pulling Docker image: \$DOCKER_REGISTRY/\$DOCKER_IMAGE_NAME:latest"
+            docker pull "\$DOCKER_REGISTRY/\$DOCKER_IMAGE_NAME:latest"
+          
             echo "🛑 Stopping old container..."
             docker stop "\$CONTAINER_NAME" 2>/dev/null || true
             docker rm "\$CONTAINER_NAME" 2>/dev/null || true
-
+          
             echo "🚀 Starting new container..."
             docker run -d \
               --name "\$CONTAINER_NAME" \
               --restart unless-stopped \
-              -p "\$CONTAINER_PORT":3000 \
+              -p 3000:3000 \
               -e TZ=UTC \
-              -e CONTAINER_NAME="\$CONTAINER_NAME" \
-              -e DEPLOY_ENV="${{ github.ref_name }}" \
-              "\$IMAGE_NAME"
+              --health-cmd="curl -f http://localhost:3000/health || exit 1" \
+              --health-interval=30s \
+              --health-timeout=10s \
+              --health-retries=3 \
+              "\$DOCKER_REGISTRY/\$DOCKER_IMAGE_NAME:latest"
 
-            echo "✅ Deployment Completed at: http://$ORACLE_HOST:\$CONTAINER_PORT"
+            echo "📜 Last 100 logs from container..."
+            docker logs --tail 100 "\$CONTAINER_NAME"  # LOG sınırlama Container ayağa kalktıktan hemen sonra logları GitHub Actions’ın log ekranına düşer.
+            
+            echo "🧹 Cleaning up dangling Docker images..."
+            docker image prune -f --filter "until=4h"   # 4H DEN ESKİ sadece kullanılmayan eski image'ları siler
+          
+            echo "🧹 Cleaning up unused containers and networks..."
+            docker container prune -f
+            docker network prune -f
+          
+            docker ps --filter "name=\$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
           EOF
