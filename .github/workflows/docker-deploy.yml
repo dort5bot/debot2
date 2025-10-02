@@ -1,5 +1,5 @@
 name: 🐳 Docker Build & Deploy
-#v1
+#v1 dbt2
 on:
   push:
     branches: [main, master]
