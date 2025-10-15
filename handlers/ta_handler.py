@@ -91,6 +91,7 @@ def ta_handler(update: Update, context: CallbackContext) -> None:
                 # YENİ2 <SYMBOL>:  <kalman_arrow>  α={score} | <regime_label>({regime_score}) | corr={correlation}
 
                 # Yeni format
+                text = f"📊 Market Scan (4h, mode={mode})\n"
                 for sym, res in results.items():
                     score = res.get("score", res.get("alpha_ta", {}).get("score", 0))
                     detail = res.get("detail", {})
@@ -104,8 +105,6 @@ def ta_handler(update: Update, context: CallbackContext) -> None:
                     clean_sym = sym.replace("USDT", "")
                 
                     text += f"{clean_sym}:  {kalman_arrow}  α={round(score,2)} | {regime_label(regime)}({round(regime,2)}) | corr={corr}\n"
-
-                
 
                 await context.bot.send_message(chat_id=chat_id, text=text)
                 return
