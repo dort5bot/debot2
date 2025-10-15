@@ -88,19 +88,9 @@ def ta_handler(update: Update, context: CallbackContext) -> None:
                 # /t için rapor formatı
                 # 📊 Market Scan (4h, mode={mode})
                 # <SYMBOL>: α={score} [<SIGNAL>] | Rejim={regime_label}
+                # YENİ2 <SYMBOL>:  <kalman_arrow>  α={score} | <regime_label>({regime_score}) | corr={correlation}
 
-                """ eski format
-                text = f"📊 Market Scan (4h, mode={mode})\n"
-                for sym, res in results.items():
-                    score = res.get("score", res.get("alpha_ta", {}).get("score", 0))
-                    signal = res.get("signal", res.get("alpha_ta", {}).get("signal", 0))
-                    regime = res.get("detail", {}).get("regime_score", 0.0)
-
-                    sig_txt = "LONG" if signal == 1 else ("SHORT" if signal == -1 else "FLAT")
-                    text += f"{sym}: α={round(score,2)} [{sig_txt}] | Rejim={regime_label(regime)}\n"
-                """
-
-                text = f"📊 Market Scan (4h, mode={mode})\n"
+                # Yeni format
                 for sym, res in results.items():
                     score = res.get("score", res.get("alpha_ta", {}).get("score", 0))
                     detail = res.get("detail", {})
@@ -109,8 +99,12 @@ def ta_handler(update: Update, context: CallbackContext) -> None:
                     kalman_arrow = "↑" if kalman > 0 else ("↓" if kalman < 0 else "→")
                     leadlag = detail.get("leadlag", {})
                     corr = round(leadlag.get("corr", 0.0), 2)
+                
+                    # Sembol sadeleştirme (BTCUSDT → BTC)
+                    clean_sym = sym.replace("USDT", "")
+                
+                    text += f"{clean_sym}:  {kalman_arrow}  α={round(score,2)} | {regime_label(regime)}({round(regime,2)}) | corr={corr}\n"
 
-                    text += f"{sym}: α={round(score,2)} {regime_label(regime)}({round(regime,2)}) {kalman_arrow} corr={corr}\n"
                 
 
                 await context.bot.send_message(chat_id=chat_id, text=text)
