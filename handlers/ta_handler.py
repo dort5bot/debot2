@@ -104,7 +104,7 @@ def ta_handler(update: Update, context: CallbackContext) -> None:
                     # Sembol sadeleştirme (BTCUSDT → BTC)
                     clean_sym = sym.replace("USDT", "")
                 
-                    text += f"{clean_sym}:  {kalman_arrow}  α={round(score,2)} | {regime_label(regime)}({round(regime,2)}) | corr={corr}\n"
+                    text += f"{clean_sym}:  {kalman_arrow}  α= {round(score,2)} | {regime_label(regime)}({round(regime,2)}) | corr={corr}\n"
 
                 await context.bot.send_message(chat_id=chat_id, text=text)
                 return
