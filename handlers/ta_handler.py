@@ -85,6 +85,11 @@ def ta_handler(update: Update, context: CallbackContext) -> None:
                 ref_close = btc_ref["close"] if btc_ref is not None else None
                 results = scan_market(data, ref_close=ref_close)
 
+                # /t için rapor formatı
+                # 📊 Market Scan (4h, mode={mode})
+                # <SYMBOL>: α={score} [<SIGNAL>] | Rejim={regime_label}
+
+                """ eski format
                 text = f"📊 Market Scan (4h, mode={mode})\n"
                 for sym, res in results.items():
                     score = res.get("score", res.get("alpha_ta", {}).get("score", 0))
@@ -93,6 +98,20 @@ def ta_handler(update: Update, context: CallbackContext) -> None:
 
                     sig_txt = "LONG" if signal == 1 else ("SHORT" if signal == -1 else "FLAT")
                     text += f"{sym}: α={round(score,2)} [{sig_txt}] | Rejim={regime_label(regime)}\n"
+                """
+
+                text = f"📊 Market Scan (4h, mode={mode})\n"
+                for sym, res in results.items():
+                    score = res.get("score", res.get("alpha_ta", {}).get("score", 0))
+                    detail = res.get("detail", {})
+                    regime = detail.get("regime_score", 0.0)
+                    kalman = detail.get("kalman_score", 0.0)
+                    kalman_arrow = "↑" if kalman > 0 else ("↓" if kalman < 0 else "→")
+                    leadlag = detail.get("leadlag", {})
+                    corr = round(leadlag.get("corr", 0.0), 2)
+
+                    text += f"{sym}: α={round(score,2)} {regime_label(regime)}({round(regime,2)}) {kalman_arrow} corr={corr}\n"
+                
 
                 await context.bot.send_message(chat_id=chat_id, text=text)
                 return
@@ -119,6 +138,8 @@ def ta_handler(update: Update, context: CallbackContext) -> None:
             kalman = res["detail"].get("kalman_score", 0.0)
             kalman_txt = "↑" if kalman > 0 else ("↓" if kalman < 0 else "→")
             leadlag = res["detail"].get("leadlag", {})
+
+            # /t <coin> için rapor formatı
 
             text = (
                 f"🔍 {coin} ({hours}h)\n"
